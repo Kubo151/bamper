@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RaceZone — Nafukovacia pretekárska trať pre deti</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+  :root{
+    --red:#E8141B;
+    --red-d:#bf0a10;
+    --ink:#15171c;
+    --ink-soft:#3a3d44;
+    --muted:#7b8089;
+    --line:#ececee;
+    --bg:#ffffff;
+    --soft:#f6f6f7;
+    --soft-2:#f0f0f2;
+    --shadow:0 18px 50px -24px rgba(20,22,28,.28);
+    --shadow-sm:0 8px 28px -16px rgba(20,22,28,.30);
+    --r:22px;
+    --display:'Sora',system-ui,sans-serif;
+    --body:'Manrope',system-ui,sans-serif;
+  }
+
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--body);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--red);color:#fff}
+
+  .wrap{max-width:1200px;margin:0 auto;padding:0 36px}
+
+  /* ---------- NAV ---------- */
+  nav{
+    position:sticky;top:0;z-index:80;
+    background:rgba(255,255,255,.82);
+    backdrop-filter:saturate(180%) blur(14px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-in{
+    display:flex;align-items:center;justify-content:space-between;
+    height:74px;
+  }
+  .logo{
+    font-family:var(--display);
+    font-weight:800;font-size:21px;letter-spacing:1px;
+    display:flex;align-items:center;gap:10px;text-transform:uppercase;
+  }
+  .logo .flag{
+    width:20px;height:20px;border-radius:5px;
+    background-image:conic-gradient(var(--ink) 0 25%, #fff 0 50%, var(--ink) 0 75%, #fff 0);
+    background-size:10px 10px;
+    box-shadow:inset 0 0 0 1px var(--line);
+  }
+  .logo span{color:var(--red)}
+  .nav-links{display:flex;gap:34px;list-style:none}
+  .nav-links a{
+    color:var(--ink-soft);text-decoration:none;font-weight:600;font-size:14.5px;
+    position:relative;transition:color .2s;
+  }
+  .nav-links a::after{
+    content:'';position:absolute;left:0;bottom:-6px;height:2px;width:0;
+    background:var(--red);transition:width .25s ease;border-radius:2px;
+  }
+  .nav-links a:hover{color:var(--ink)}
+  .nav-links a:hover::after{width:100%}
+
+  .btn{
+    font-family:var(--body);font-weight:700;font-size:14.5px;
+    border-radius:999px;cursor:pointer;border:1.5px solid transparent;
+    padding:12px 24px;transition:transform .18s ease, box-shadow .18s ease, background .18s, color .18s, border-color .18s;
+    display:inline-flex;align-items:center;gap:9px;white-space:nowrap;text-decoration:none;
+  }
+  .btn-red{background:var(--red);color:#fff;box-shadow:0 10px 24px -12px rgba(232,20,27,.7)}
+  .btn-red:hover{background:var(--red-d);transform:translateY(-2px);box-shadow:0 16px 30px -12px rgba(232,20,27,.75)}
+  .btn-ghost{background:#fff;color:var(--ink);border-color:var(--line)}
+  .btn-ghost:hover{border-color:var(--ink);transform:translateY(-2px)}
+  .btn-dark{background:var(--ink);color:#fff}
+  .btn-dark:hover{background:#000;transform:translateY(-2px)}
+  .btn .arr{transition:transform .2s}
+  .btn:hover .arr{transform:translateX(3px)}
+
+  /* ---------- HERO ---------- */
+  .hero{position:relative;padding:64px 0 40px}
+  .hero-grid{
+    display:grid;grid-template-columns:1.02fr 1.1fr;gap:48px;align-items:center;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:9px;
+    background:#fff;border:1px solid var(--line);
+    padding:7px 15px 7px 11px;border-radius:999px;
+    font-size:12.5px;font-weight:600;color:var(--ink-soft);
+    box-shadow:var(--shadow-sm);
+  }
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--red);position:relative}
+  .dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1px solid var(--red);animation:ping 1.8s ease-out infinite}
+  @keyframes ping{0%{transform:scale(.6);opacity:.9}100%{transform:scale(1.9);opacity:0}}
+
+  h1{
+    font-family:var(--display);font-weight:800;
+    font-size:clamp(42px,6vw,72px);line-height:.98;letter-spacing:-1.5px;
+    margin:22px 0 20px;
+  }
+  h1 .em{color:var(--red);position:relative;white-space:nowrap}
+  .hero p.lead{
+    color:var(--muted);font-size:17px;line-height:1.7;max-width:440px;margin-bottom:30px;
+  }
+  .hero-cta{display:flex;gap:13px;flex-wrap:wrap;margin-bottom:30px}
+  .trust{display:flex;align-items:center;gap:16px;color:var(--muted);font-size:13.5px;font-weight:500}
+  .stars{color:var(--red);letter-spacing:2px;font-size:14px}
+  .trust .div{width:1px;height:16px;background:var(--line)}
+
+  /* track + buggy stage */
+  .stage{
+    position:relative;
+    border-radius:28px;
+    background:
+      radial-gradient(120% 90% at 70% 18%, #fff 0%, var(--soft) 55%, var(--soft-2) 100%);
+    border:1px solid var(--line);
+    box-shadow:var(--shadow);
+    padding:30px;
+    overflow:hidden;
+    aspect-ratio:1.18/1;
+  }
+  .stage::before{ /* soft red glow */
+    content:'';position:absolute;width:60%;height:60%;left:8%;top:6%;
+    background:radial-gradient(circle,rgba(232,20,27,.16),transparent 70%);
+    filter:blur(6px);pointer-events:none;
+  }
+  .stage .grid-lines{
+    position:absolute;inset:0;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:38px 38px;opacity:.5;
+    -webkit-mask-image:radial-gradient(circle at 50% 55%,#000 35%,transparent 78%);
+            mask-image:radial-gradient(circle at 50% 55%,#000 35%,transparent 78%);
+  }
+  .track-img{
+    position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);
+    width:88%;filter:drop-shadow(0 26px 26px rgba(20,22,28,.16));
+    animation:floaty 6s ease-in-out infinite;
+  }
+  @keyframes floaty{0%,100%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,calc(-50% - 9px))}}
+
+  /* the driving buggy */
+  .buggy-driver{
+    position:absolute;left:36%;bottom:9%;width:30%;
+    transform-origin:center bottom;opacity:1;
+    will-change:left,bottom,transform,opacity;
+  }
+  /* drive animation turns on only after first paint (see script) */
+  html.go .buggy-driver{animation:drive 8.5s linear infinite}
+  .buggy-driver img{display:block;width:100%;filter:drop-shadow(0 10px 10px rgba(20,22,28,.22))}
+  .buggy-bob{animation:bob .42s ease-in-out infinite alternate;transform-origin:center bottom}
+  @keyframes bob{from{transform:translateY(0) rotate(-.6deg)}to{transform:translateY(-4px) rotate(.6deg)}}
+  .buggy-driver::after{ /* ground shadow */
+    content:'';position:absolute;left:14%;bottom:-6px;width:72%;height:14px;
+    background:radial-gradient(ellipse,rgba(20,22,28,.26),transparent 70%);
+    animation:shadowPulse .42s ease-in-out infinite alternate;
+  }
+  @keyframes shadowPulse{from{transform:scaleX(1);opacity:.85}to{transform:scaleX(.92);opacity:.6}}
+  /* speed lines */
+  .speed{position:absolute;right:96%;bottom:22%;width:54%;height:30%;pointer-events:none}
+  .speed span{
+    position:absolute;height:3px;border-radius:3px;right:0;
+    background:linear-gradient(90deg,transparent,var(--red));
+    animation:zoom .5s linear infinite;opacity:0;
+  }
+  .speed span:nth-child(1){top:18%;width:70%;animation-delay:0s}
+  .speed span:nth-child(2){top:45%;width:100%;animation-delay:.12s;background:linear-gradient(90deg,transparent,var(--ink))}
+  .speed span:nth-child(3){top:72%;width:55%;animation-delay:.25s}
+  @keyframes zoom{0%{opacity:0;transform:translateX(20px)}40%{opacity:.55}100%{opacity:0;transform:translateX(-26px)}}
+
+  @keyframes drive{
+    0%   {left:-14%; bottom:20%; transform:scale(.6);  opacity:0}
+    9%   {opacity:1}
+    50%  {left:40%;  bottom:9%;  transform:scale(1);   opacity:1}
+    91%  {opacity:1}
+    100% {left:101%; bottom:20%; transform:scale(.6);  opacity:0}
+  }
+
+  /* ---------- MARQUEE STRIP ---------- */
+  .strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--ink);overflow:hidden}
+  .marquee{display:flex;gap:54px;white-space:nowrap;padding:16px 0;animation:scrollx 22s linear infinite;width:max-content}
+  .marquee span{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:2px;color:#fff;text-transform:uppercase;display:inline-flex;align-items:center;gap:54px}
+  .marquee span i{color:var(--red);font-style:normal}
+  @keyframes scrollx{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  /* ---------- STATS ---------- */
+  .stats{padding:64px 0}
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+  .stat{
+    background:#fff;border:1px solid var(--line);border-radius:var(--r);
+    padding:30px 26px;transition:transform .25s ease, box-shadow .25s ease;
+  }
+  .stat:hover{transform:translateY(-5px);box-shadow:var(--shadow-sm)}
+  .stat .num{font-family:var(--display);font-weight:800;font-size:46px;line-height:1;color:var(--ink)}
+  .stat .num sup{color:var(--red);font-size:20px;font-weight:700;vertical-align:super;margin-left:2px}
+  .stat .lbl{margin-top:12px;font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.3px}
+
+  /* ---------- SECTION HEAD ---------- */
+  .sec-tag{
+    display:inline-flex;align-items:center;gap:8px;
+    font-weight:700;font-size:12.5px;letter-spacing:2px;text-transform:uppercase;color:var(--red);
+    margin-bottom:14px;
+  }
+  .sec-tag::before{content:'';width:22px;height:2px;background:var(--red);border-radius:2px}
+  h2{font-family:var(--display);font-weight:800;font-size:clamp(30px,4vw,44px);letter-spacing:-1px;line-height:1.04}
+  .sec-sub{color:var(--muted);font-size:16px;line-height:1.7;max-width:480px;margin-top:16px}
+
+  /* ---------- FEATURES ---------- */
+  .features{padding:40px 0 24px}
+  .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:44px}
+  .feat{
+    background:#fff;border:1px solid var(--line);border-radius:var(--r);
+    padding:32px 30px;position:relative;overflow:hidden;
+    transition:transform .25s ease, box-shadow .25s ease, border-color .25s;
+  }
+  .feat:hover{transform:translateY(-6px);box-shadow:var(--shadow);border-color:#e3e3e6}
+  .feat .ic{
+    width:50px;height:50px;border-radius:14px;background:var(--soft);
+    display:grid;place-items:center;margin-bottom:20px;transition:background .25s,transform .25s;
+  }
+  .feat:hover .ic{background:var(--red);transform:rotate(-6deg) scale(1.05)}
+  .feat .ic svg{width:24px;height:24px;stroke:var(--red);transition:stroke .25s}
+  .feat:hover .ic svg{stroke:#fff}
+  .feat .n{position:absolute;top:24px;right:28px;font-family:var(--display);font-weight:800;font-size:15px;color:var(--soft-2)}
+  .feat:hover .n{color:#f0d5d6}
+  .feat h3{font-family:var(--display);font-size:19px;font-weight:700;margin-bottom:10px;letter-spacing:-.3px}
+  .feat p{color:var(--muted);font-size:14.5px;line-height:1.7}
+
+  /* ---------- HOW ---------- */
+  .how{padding:72px 0}
+  .how-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:56px;align-items:start}
+  .steps{display:flex;flex-direction:column;gap:0;margin-top:6px}
+  .step{
+    display:flex;gap:24px;padding:26px 0;border-bottom:1px solid var(--line);
+    align-items:flex-start;
+  }
+  .step:first-child{padding-top:0}
+  .step:last-child{border-bottom:none;padding-bottom:0}
+  .step .sn{
+    flex-shrink:0;width:48px;height:48px;border-radius:14px;
+    border:1.5px solid var(--line);display:grid;place-items:center;
+    font-family:var(--display);font-weight:800;font-size:18px;color:var(--red);
+    transition:background .25s,color .25s,border-color .25s,transform .25s;
+  }
+  .step:hover .sn{background:var(--red);color:#fff;border-color:var(--red);transform:scale(1.06)}
+  .step h4{font-family:var(--display);font-size:18px;font-weight:700;margin-bottom:7px;letter-spacing:-.2px}
+  .step p{color:var(--muted);font-size:14.5px;line-height:1.7;max-width:460px}
+  .how-card{
+    background:var(--ink);border-radius:26px;padding:34px;color:#fff;position:sticky;top:100px;overflow:hidden;
+  }
+  .how-card .flagbar{height:14px;border-radius:4px;margin-bottom:24px;
+    background-image:conic-gradient(#fff 0 25%,var(--red) 0 50%,#fff 0 75%,var(--red) 0);background-size:14px 14px}
+  .how-card h3{font-family:var(--display);font-size:24px;font-weight:700;line-height:1.15;margin-bottom:14px}
+  .how-card p{color:#b9bcc4;font-size:14.5px;line-height:1.7;margin-bottom:26px}
+  .how-card .line{display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid rgba(255,255,255,.1);font-size:14.5px;font-weight:600}
+  .how-card .line .ck{width:22px;height:22px;border-radius:50%;background:var(--red);display:grid;place-items:center;flex-shrink:0}
+  .how-card .line .ck svg{width:12px;height:12px;stroke:#fff}
+
+  /* ---------- CTA ---------- */
+  .cta-sec{padding:24px 0 80px}
+  .cta{
+    position:relative;overflow:hidden;border-radius:30px;
+    background:linear-gradient(135deg,var(--red) 0%,var(--red-d) 100%);
+    padding:64px 56px;display:flex;align-items:center;justify-content:space-between;gap:32px;
+    box-shadow:0 30px 60px -28px rgba(232,20,27,.6);
+  }
+  .cta .deco{position:absolute;inset:0;opacity:.16;pointer-events:none;
+    background-image:conic-gradient(#fff 0 25%,transparent 0 50%,#fff 0 75%,transparent 0);
+    background-size:30px 30px;
+    -webkit-mask-image:radial-gradient(circle at 88% 18%,#000,transparent 55%);
+            mask-image:radial-gradient(circle at 88% 18%,#000,transparent 55%)}
+  .cta h2{color:#fff;font-size:clamp(28px,3.6vw,42px);line-height:1.05;margin-bottom:12px}
+  .cta p{color:rgba(255,255,255,.9);font-size:16px;max-width:420px}
+  .cta-r{position:relative;z-index:2;flex-shrink:0}
+
+  /* ---------- FOOTER ---------- */
+  footer{border-top:1px solid var(--line);padding:48px 0 30px}
+  .foot-grid{display:flex;justify-content:space-between;align-items:flex-start;gap:40px;flex-wrap:wrap}
+  .foot-l{max-width:300px}
+  .foot-l p{color:var(--muted);font-size:14px;line-height:1.7;margin-top:16px}
+  .foot-cols{display:flex;gap:64px;flex-wrap:wrap}
+  .fcol h5{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink);margin-bottom:16px;font-weight:700}
+  .fcol a{display:block;color:var(--muted);text-decoration:none;font-size:14.5px;margin-bottom:11px;transition:color .2s;font-weight:500}
+  .fcol a:hover{color:var(--red)}
+  .foot-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:40px;padding-top:24px;border-top:1px solid var(--line);flex-wrap:wrap;gap:12px}
+  .foot-bottom p{color:var(--muted);font-size:13px}
+
+  /* ---------- REVEAL (enabled only after first paint; visible by default) ---------- */
+  html.go .reveal{transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+  html.go .reveal:not(.in){opacity:0;transform:translateY(28px)}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media(max-width:920px){
+    .hero-grid{grid-template-columns:1fr;gap:30px}
+    .stage{order:-1;aspect-ratio:1.3/1}
+    .how-grid{grid-template-columns:1fr;gap:34px}
+    .how-card{position:relative;top:0}
+    .stats-grid{grid-template-columns:repeat(2,1fr)}
+    .feat-grid{grid-template-columns:1fr}
+    .nav-links{display:none}
+    .cta{flex-direction:column;align-items:flex-start;padding:44px 32px}
+  }
+  @media(max-width:560px){
+    .wrap{padding:0 22px}
+    .stats-grid{grid-template-columns:1fr 1fr;gap:14px}
+    .stat{padding:22px 20px}
+    .stat .num{font-size:38px}
+  }
+
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none!important}
+  }
+</style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="wrap nav-in">
+      <div class="logo"><span class="flag"></span><span>RACE</span>ZONE</div>
+      <ul class="nav-links">
+        <li><a href="#trat">Trať</a></li>
+        <li><a href="#preco">Čo dostanete</a></li>
+        <li><a href="#ako">Ako to funguje</a></li>
+        <li><a href="#kontakt">Kontakt</a></li>
+      </ul>
+      <a href="#kontakt" class="btn btn-red">Rezervovať <span class="arr">→</span></a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero" id="trat">
+    <div class="wrap hero-grid">
+      <div class="hero-text reveal">
+        <div class="badge"><span class="dot"></span> Voľné termíny na sezónu 2026</div>
+        <h1>Nafukovacia<br><span class="em">pretekárska</span> trať pre deti</h1>
+        <p class="lead">Reálne elektrické buginy na bezpečnej nafukovacej trati. Prémiová atrakcia na detské oslavy, firemné dni a festivaly — postavíme ju kdekoľvek za 30 minút.</p>
+        <div class="hero-cta">
+          <a href="#kontakt" class="btn btn-red">Rezervovať termín <span class="arr">→</span></a>
+          <a href="#ako" class="btn btn-ghost">Ako to funguje</a>
+        </div>
+        <div class="trust">
+          <span class="stars">★★★★★</span>
+          <span>4,9 / 5 od organizátorov</span>
+          <span class="div"></span>
+          <span>200+ akcií ročne</span>
+        </div>
+      </div>
+
+      <!-- TRACK STAGE with driving buggy -->
+      <div class="stage reveal">
+        <div class="grid-lines"></div>
+        <img class="track-img" src="assets/track.png" alt="Nafukovacia pretekárska trať so šachovnicovou bránou">
+        <div class="buggy-driver">
+          <div class="speed"><span></span><span></span><span></span></div>
+          <div class="buggy-bob"><img src="assets/buggy.png" alt="Elektrická bugina"></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MARQUEE -->
+  <div class="strip">
+    <div class="marquee">
+      <span>Detské oslavy <i>◆</i> Firemné dni <i>◆</i> Festivaly <i>◆</i> Školské akcie <i>◆</i> Mestské podujatia <i>◆</i> Teambuilding <i>◆</i></span>
+      <span aria-hidden="true">Detské oslavy <i>◆</i> Firemné dni <i>◆</i> Festivaly <i>◆</i> Školské akcie <i>◆</i> Mestské podujatia <i>◆</i> Teambuilding <i>◆</i></span>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <section class="stats">
+    <div class="wrap stats-grid">
+      <div class="stat reveal"><div class="num" data-count="500">500<sup>m²</sup></div><div class="lbl">m² plocha trate</div></div>
+      <div class="stat reveal"><div class="num" data-count="4">4</div><div class="lbl">buginy súčasne</div></div>
+      <div class="stat reveal"><div class="num" data-count="30">30<sup>min</sup></div><div class="lbl">rýchla montáž</div></div>
+      <div class="stat reveal"><div class="num" data-count="4.9">4,9</div><div class="lbl">priemerné hodnotenie</div></div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features" id="preco">
+    <div class="wrap">
+      <div class="reveal">
+        <div class="sec-tag">Prečo RaceZone</div>
+        <h2>Atrakcia, ktorú si<br>deti zapamätajú</h2>
+        <p class="sec-sub">Kompletná zostava — trať, buginy aj obsluha. Vy sa staráte len o hostí, o zvyšok sa postaráme my.</p>
+      </div>
+      <div class="feat-grid">
+        <div class="feat reveal">
+          <div class="n">01</div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-7 4 14 2-7h6"/></svg></div>
+          <h3>Profesionálna trať</h3>
+          <p>Nafukovacia dráha so šachovnicovou cieľovou bránou a mäkkými mantinelmi. Bezpečná dnu aj vonku, na trávu aj asfalt.</p>
+        </div>
+        <div class="feat reveal">
+          <div class="n">02</div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="17" r="2.5"/><circle cx="17" cy="17" r="2.5"/><path d="M5 17h-1v-4l3-5h7l3 4h2a1 1 0 0 1 1 1v4h-1"/><path d="M9.5 17h5"/></svg></div>
+          <h3>Elektrické buginy</h3>
+          <p>Tiché akumulátorové buginy s regulovateľnou rýchlosťou. Bez výfukov a hluku — ideálne aj pre tých najmenších pretekárov.</p>
+        </div>
+        <div class="feat reveal">
+          <div class="n">03</div>
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4L4.2 7.7l5.4-.8z"/></svg></div>
+          <h3>Obsluha v cene</h3>
+          <p>Prídeme, postavíme, dozeráme na priebeh a po akcii všetko zložíme. Skúsený personál a kompletné poistenie atrakcie.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW -->
+  <section class="how" id="ako">
+    <div class="wrap how-grid">
+      <div class="reveal">
+        <div class="sec-tag">Postup</div>
+        <h2>Ako to funguje</h2>
+        <div class="steps">
+          <div class="step">
+            <div class="sn">1</div>
+            <div><h4>Rezervujte termín</h4><p>Napíšte alebo zavolajte. Spolu doladíme dátum, miesto a počet detí, aby všetko sedelo.</p></div>
+          </div>
+          <div class="step">
+            <div class="sn">2</div>
+            <div><h4>Dovezieme a postavíme</h4><p>Prídeme vopred, nafúkneme trať, pripravíme buginy a všetko odskúšame. Vy len privítate hostí.</p></div>
+          </div>
+          <div class="step">
+            <div class="sn">3</div>
+            <div><h4>Preteky môžu začať</h4><p>Štart, šachovnicová brána a spokojné deti. Po skončení akcie za vás všetko zložíme a odvezieme.</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="how-card reveal">
+        <div class="flagbar"></div>
+        <h3>Všetko v jednom balíku</h3>
+        <p>Žiadne starosti s logistikou. Postaráme sa o trať, buginy, bezpečnosť aj obsluhu počas celej akcie.</p>
+        <div class="line"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span> Doprava a montáž po celom okolí</div>
+        <div class="line"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span> Prilby a bezpečnostné vybavenie</div>
+        <div class="line"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span> Vyškolená obsluha počas celej akcie</div>
+        <div class="line"><span class="ck"><svg viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-11"/></svg></span> Poistenie atrakcie v cene</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-sec" id="kontakt">
+    <div class="wrap">
+      <div class="cta reveal">
+        <div class="deco"></div>
+        <div>
+          <h2>Rezervujte si termín<br>ešte dnes</h2>
+          <p>Voľné víkendy sa v sezóne rýchlo plnia. Ozvite sa a radi vám pripravíme ponuku na mieru.</p>
+        </div>
+        <div class="cta-r">
+          <a href="mailto:info@racezone.sk" class="btn btn-dark">info@racezone.sk <span class="arr">→</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="wrap">
+      <div class="foot-grid">
+        <div class="foot-l">
+          <div class="logo"><span class="flag"></span><span>RACE</span>ZONE</div>
+          <p>Prenájom nafukovacích pretekárskych tratí a elektrických bugín pre detské a firemné akcie po celom Slovensku.</p>
+        </div>
+        <div class="foot-cols">
+          <div class="fcol">
+            <h5>Atrakcia</h5>
+            <a href="#trat">Trať</a>
+            <a href="#preco">Čo dostanete</a>
+            <a href="#ako">Ako to funguje</a>
+          </div>
+          <div class="fcol">
+            <h5>Kontakt</h5>
+            <a href="mailto:info@racezone.sk">info@racezone.sk</a>
+            <a href="tel:+421900000000">+421 900 000 000</a>
+            <a href="#">Instagram</a>
+            <a href="#">Facebook</a>
+          </div>
+        </div>
+      </div>
+      <div class="foot-bottom">
+        <p>© 2026 RaceZone — Prenájom nafukovacích pretekárskych tratí</p>
+        <p>Vyrobené s vášňou pre preteky 🏁</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // stagger siblings within groups
+    document.querySelectorAll('.feat-grid, .stats-grid, .steps').forEach(grid=>{
+      [...grid.children].forEach((c,i)=>{ if(c.classList.contains('reveal')) c.style.transitionDelay=(i*90)+'ms'; });
+    });
+
+    // Count-up
+    function animateCount(el){
+      const target = parseFloat(el.dataset.count);
+      const decimals = (el.dataset.count.indexOf('.')>-1)?1:0;
+      const sup = el.querySelector('sup');
+      const supHTML = sup ? sup.outerHTML : '';
+      let start=null; const dur=1200;
+      function frame(t){
+        if(!start) start=t;
+        const p=Math.min((t-start)/dur,1);
+        const eased=1-Math.pow(1-p,3);
+        const val=(target*eased).toFixed(decimals);
+        const display=decimals?val.replace('.',','):val;
+        el.innerHTML=display+supHTML;
+        if(p<1) requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
+
+    // Robust scroll-based reveal + count-up. Motion is enabled ONLY after the first
+    // paint via requestAnimationFrame — in environments where rAF never ticks the page
+    // simply stays fully visible & static (never hidden).
+    const reveals = [...document.querySelectorAll('.reveal')];
+    const counters = [...document.querySelectorAll('.num[data-count]')];
+    const vh = ()=> window.innerHeight || document.documentElement.clientHeight;
+    function revealTick(){
+      const h=vh();
+      reveals.forEach(el=>{
+        if(el.classList.contains('in')) return;
+        const r=el.getBoundingClientRect();
+        if(r.top < h*0.9 && r.bottom > 0) el.classList.add('in');
+      });
+    }
+    function countTick(){
+      const h=vh();
+      counters.forEach(el=>{
+        if(el.dataset.done) return;
+        const r=el.getBoundingClientRect();
+        if(r.top < h*0.95 && r.bottom > 0){ el.dataset.done='1'; animateCount(el); }
+      });
+    }
+    let scheduled=false;
+    function onScroll(){ if(scheduled) return; scheduled=true; requestAnimationFrame(()=>{ scheduled=false; revealTick(); countTick(); }); }
+
+    requestAnimationFrame(function(){
+      // mark already-visible reveals as shown first, so turning on hidden states causes no flash
+      const h=vh();
+      reveals.forEach(el=>{ if(el.getBoundingClientRect().top < h*0.95) el.classList.add('in'); });
+      document.documentElement.classList.add('go');
+      window.addEventListener('scroll', onScroll, {passive:true});
+      window.addEventListener('resize', onScroll, {passive:true});
+      revealTick(); countTick();
+    });
+  </script>
+</body>
+</html>
