@@ -4,6 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>RaceZone — Nafukovacia pretekárska trať pre deti</title>
+<meta name="description" content="Prenájom nafukovacej pretekárskej trate s elektrickou buginou a štvorkolkou. Detské oslavy, firemné dni, festivaly — Východné a Stredné Slovensko.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -116,7 +118,7 @@
     color:var(--muted);font-size:17px;line-height:1.7;max-width:440px;margin-bottom:30px;
   }
   .hero-cta{display:flex;gap:13px;flex-wrap:wrap;margin-bottom:30px}
-  .trust{display:flex;align-items:center;gap:16px;color:var(--muted);font-size:13.5px;font-weight:500}
+  .trust{display:flex;align-items:center;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:13.5px;font-weight:500}
   .stars{color:var(--red);letter-spacing:2px;font-size:14px}
   .trust .div{width:1px;height:16px;background:var(--line)}
 
@@ -316,6 +318,7 @@
     .stats-grid{grid-template-columns:1fr 1fr;gap:14px}
     .stat{padding:22px 20px}
     .stat .num{font-size:38px}
+    .nav-in .btn-red{display:none}
   }
 
   @media(prefers-reduced-motion:reduce){
@@ -392,6 +395,7 @@
     .contact-grid{grid-template-columns:1fr;gap:36px}
     .contact-info{position:relative;top:0}
     .form-row{grid-template-columns:1fr}
+    .field-check{padding-top:0}
   }
 
   /* ---------- COOKIE BANNER ---------- */
@@ -799,6 +803,8 @@
               <option value="quad">Trať + elektroštvorkolka</option>
               <option value="buggy">Trať + elektrická bugina</option>
               <option value="track">Iba trať (bez vozidiel)</option>
+              <option value="quad-only">Iba elektroštvorkolka (bez trate)</option>
+              <option value="buggy-only">Iba elektrická bugina (bez trate)</option>
             </select>
           </div>
           <div class="form-row">
