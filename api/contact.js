@@ -3,7 +3,7 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { name, phone, email, date, time, type, package: pkg, prep, message } = req.body || {};
+  const { name, phone, email, date, date_end, time, type, package: pkg, prep, message } = req.body || {};
 
   if (!name || !phone || !email) {
     return res.status(400).json({ error: 'Chýbajú povinné polia' });
@@ -50,7 +50,7 @@ module.exports = async function handler(req, res) {
       </tr>
       ${pkg ? `<tr><td style="padding:8px 0;color:#7b8089;vertical-align:top">Záujem o</td><td style="padding:8px 0;font-weight:600;color:#E8141B">${h(pkg)}</td></tr>` : ''}
       ${type ? `<tr><td style="padding:8px 0;color:#7b8089;vertical-align:top">Typ akcie</td><td style="padding:8px 0;color:#15171c">${h(type)}</td></tr>` : ''}
-      ${date ? `<tr><td style="padding:8px 0;color:#7b8089;vertical-align:top">Dátum akcie</td><td style="padding:8px 0;color:#15171c">${h(date)}${time ? ` o ${h(time)}` : ''}</td></tr>` : ''}
+      ${date ? `<tr><td style="padding:8px 0;color:#7b8089;vertical-align:top">Dátum akcie</td><td style="padding:8px 0;color:#15171c">${h(date)}${date_end && date_end !== date ? ` — ${h(date_end)}` : ''}${time ? ` o ${h(time)}` : ''}</td></tr>` : ''}
       ${prep === 'yes' ? `<tr><td style="padding:8px 0;color:#7b8089;vertical-align:top">Príprava</td><td style="padding:8px 0;color:#15171c">Požaduje montáž deň vopred</td></tr>` : ''}
     </table>
     ${message ? `<div style="margin-top:16px;background:#f6f6f7;border-radius:8px;padding:16px"><p style="margin:0;color:#3a3d44;font-size:14px;line-height:1.7">${h(message)}</p></div>` : ''}
