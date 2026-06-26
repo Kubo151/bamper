@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bamper Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta name="robots" content="noindex,nofollow">
+<style>
+  :root {
+    --red: #E8141B;
+    --red-d: #bf0a10;
+    --ink: #15171c;
+    --ink-soft: #3a3d44;
+    --muted: #7b8089;
+    --line: #ececee;
+    --bg: #ffffff;
+    --soft: #f6f6f7;
+    --display: 'Sora', system-ui, sans-serif;
+    --body: 'Manrope', system-ui, sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--body); background: var(--soft); color: var(--ink); min-height: 100vh; }
+
+  /* ── LOGIN ── */
+  #loginScreen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .login-card {
+    background: var(--bg);
+    border-radius: 16px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.08);
+  }
+  .login-logo { font-family: var(--display); font-size: 22px; font-weight: 800; font-style: italic; color: var(--ink); margin-bottom: 28px; }
+  .login-logo span { color: var(--red); }
+  .login-card h1 { font-family: var(--display); font-size: 20px; font-weight: 700; margin-bottom: 24px; }
+  .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .field label { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+  .field input, .field select, .field textarea {
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: var(--body);
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+    background: var(--bg);
+    transition: border-color .15s;
+    width: 100%;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--red); }
+  .field textarea { resize: vertical; min-height: 80px; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 11px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-family: var(--body);
+    font-size: 14px;
+    font-weight: 700;
+    transition: background .15s, opacity .15s;
+  }
+  .btn-primary { background: var(--red); color: #fff; }
+  .btn-primary:hover { background: var(--red-d); }
+  .btn-secondary { background: var(--soft); color: var(--ink); }
+  .btn-secondary:hover { background: var(--line); }
+  .btn-danger { background: #fff0f0; color: var(--red); }
+  .btn-danger:hover { background: #ffd6d6; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-full { width: 100%; }
+  .err { color: var(--red); font-size: 13px; margin-top: 8px; }
+
+  /* ── APP SHELL ── */
+  #app { display: none; }
+  .topbar {
+    background: var(--ink);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-logo { font-family: var(--display); font-weight: 800; font-style: italic; font-size: 18px; }
+  .topbar-logo span { color: var(--red); }
+  .topbar-logout { background: rgba(255,255,255,.12); color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-family: var(--body); font-size: 13px; font-weight: 600; cursor: pointer; }
+  .topbar-logout:hover { background: rgba(255,255,255,.2); }
+
+  .tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+    padding: 0 24px;
+  }
+  .tab-btn {
+    padding: 14px 20px;
+    border: none;
+    background: none;
+    font-family: var(--body);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color .15s, border-color .15s;
+  }
+  .tab-btn.active { color: var(--red); border-color: var(--red); }
+
+  .content { max-width: 1000px; margin: 0 auto; padding: 28px 24px; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 12px;
+    border: 1px solid var(--line);
+  }
+  .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .card-title { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+  .card-sub { font-size: 13px; color: var(--muted); }
+  .card-body { margin-top: 12px; font-size: 14px; color: var(--ink-soft); line-height: 1.6; }
+  .card-actions { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+  }
+  .badge-new { background: #e8f4ff; color: #1a6fb5; }
+  .badge-contacted { background: #fff8e0; color: #a06900; }
+  .badge-confirmed { background: #e5f7ed; color: #1a7a40; }
+  .badge-declined { background: #ffe8e8; color: var(--red); }
+  .badge-approved { background: #e5f7ed; color: #1a7a40; }
+  .badge-pending { background: var(--soft); color: var(--muted); }
+
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .section-title { font-family: var(--display); font-size: 18px; font-weight: 700; }
+
+  .add-form {
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--line);
+    margin-bottom: 24px;
+    display: none;
+  }
+  .add-form.open { display: block; }
+  .add-form h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media(max-width:600px) { .form-row { grid-template-columns: 1fr; } }
+  .form-actions { display: flex; gap: 8px; margin-top: 16px; }
+
+  .empty { text-align: center; padding: 48px 24px; color: var(--muted); font-size: 14px; }
+  .loading { text-align: center; padding: 48px; color: var(--muted); }
+
+  select.status-select {
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--body);
+    cursor: pointer;
+    background: var(--soft);
+  }
+
+  .info-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+  .info-row span { color: var(--muted); }
+  .info-row strong { color: var(--ink); }
+
+  .toggle-approved {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .toggle-approved input[type=checkbox] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--red);
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">B<span>A</span>MPER</div>
+    <h1>Admin panel</h1>
+    <div class="field">
+      <label>Heslo</label>
+      <input type="password" id="pwInput" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary btn-full" onclick="login()">Prihlásiť sa</button>
+    <p class="err" id="loginErr"></p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">B<span>A</span>MPER <span style="font-size:12px;font-style:normal;font-weight:400;opacity:.5;margin-left:6px">admin</span></div>
+    <button class="topbar-logout" onclick="logout()">Odhlásiť</button>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="reservations" onclick="switchTab('reservations')">Rezervácie</button>
+    <button class="tab-btn" data-tab="testimonials" onclick="switchTab('testimonials')">Referencie</button>
+    <button class="tab-btn" data-tab="blocked" onclick="switchTab('blocked')">Blokované termíny</button>
+  </div>
+
+  <div class="content">
+    <!-- RESERVATIONS -->
+    <div id="tab-reservations">
+      <div class="section-header">
+        <div class="section-title">Rezervácie</div>
+      </div>
+      <div id="reservationsList" class="loading">Načítavam...</div>
+    </div>
+
+    <!-- TESTIMONIALS -->
+    <div id="tab-testimonials" style="display:none">
+      <div class="section-header">
+        <div class="section-title">Referencie</div>
+        <button class="btn btn-primary btn-sm" onclick="toggleAddTestimonial()">+ Pridať</button>
+      </div>
+
+      <div class="add-form" id="addTestimonialForm">
+        <h3>Nová referencia</h3>
+        <div class="field"><label>Meno</label><input type="text" id="tName" placeholder="Ján Novák"></div>
+        <div class="field"><label>Rola / firma (nepovinné)</label><input type="text" id="tRole" placeholder="Organizátor podujatia"></div>
+        <div class="field"><label>Text referencie</label><textarea id="tBody" placeholder="Super zážitok, určite odporúčam..."></textarea></div>
+        <div class="form-row">
+          <div class="field"><label>Poradie zobrazenia</label><input type="number" id="tOrder" value="0" min="0"></div>
+          <div class="field" style="justify-content:flex-end">
+            <label>&nbsp;</label>
+            <label class="toggle-approved"><input type="checkbox" id="tApproved"> Zobraziť na stránke</label>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="addTestimonial()">Uložiť</button>
+          <button class="btn btn-secondary" onclick="toggleAddTestimonial()">Zrušiť</button>
+        </div>
+      </div>
+
+      <div id="testimonialsList" class="loading">Načítavam...</div>
+    </div>
+
+    <!-- BLOCKED DATES -->
+    <div id="tab-blocked" style="display:none">
+      <div class="section-header">
+        <div class="section-title">Blokované termíny</div>
+        <button class="btn btn-primary btn-sm" onclick="toggleAddBlocked()">+ Pridať</button>
+      </div>
+
+      <div class="add-form" id="addBlockedForm">
+        <h3>Nový blokovaný termín</h3>
+        <div class="form-row">
+          <div class="field"><label>Dátum od</label><input type="date" id="bFrom"></div>
+          <div class="field"><label>Dátum do</label><input type="date" id="bTo"></div>
+        </div>
+        <div class="field"><label>Popis (nepovinný)</label><input type="text" id="bLabel" placeholder="Žijem festival"></div>
+        <div class="form-actions">
+          <button class="btn btn-primary" onclick="addBlocked()">Uložiť</button>
+          <button class="btn btn-secondary" onclick="toggleAddBlocked()">Zrušiť</button>
+        </div>
+      </div>
+
+      <div id="blockedList" class="loading">Načítavam...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let TOKEN = sessionStorage.getItem('bamper_admin_token') || '';
+
+  if (TOKEN) showApp();
+
+  document.getElementById('pwInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') login();
+  });
+
+  async function login() {
+    const pw = document.getElementById('pwInput').value;
+    const errEl = document.getElementById('loginErr');
+    errEl.textContent = '';
+    const res = await fetch('/api/admin-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw }),
+    });
+    if (res.ok) {
+      TOKEN = pw;
+      sessionStorage.setItem('bamper_admin_token', pw);
+      showApp();
+    } else {
+      const d = await res.json();
+      errEl.textContent = d.error || 'Chyba pri prihlásení';
+    }
+  }
+
+  function logout() {
+    TOKEN = '';
+    sessionStorage.removeItem('bamper_admin_token');
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+  }
+
+  function showApp() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadReservations();
+  }
+
+  function switchTab(tab) {
+    ['reservations','testimonials','blocked'].forEach(t => {
+      document.getElementById(`tab-${t}`).style.display = t === tab ? '' : 'none';
+      document.querySelector(`[data-tab="${t}"]`).classList.toggle('active', t === tab);
+    });
+    if (tab === 'reservations') loadReservations();
+    if (tab === 'testimonials') loadTestimonials();
+    if (tab === 'blocked') loadBlocked();
+  }
+
+  async function api(path, method = 'GET', body = null) {
+    const res = await fetch(path, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TOKEN}`,
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (res.status === 401) { logout(); return null; }
+    if (res.status === 204) return null;
+    return res.json();
+  }
+
+  // ── REZERVÁCIE ──
+  const STATUS_LABELS = { new: 'Nový', contacted: 'Kontaktovaný', confirmed: 'Potvrdený', declined: 'Odmietnutý' };
+  const STATUS_BADGE = { new: 'badge-new', contacted: 'badge-contacted', confirmed: 'badge-confirmed', declined: 'badge-declined' };
+
+  async function loadReservations() {
+    const el = document.getElementById('reservationsList');
+    el.innerHTML = '<div class="loading">Načítavam...</div>';
+    const data = await api('/api/admin-data?type=reservations');
+    if (!data || data.length === 0) { el.innerHTML = '<div class="empty">Žiadne rezervácie</div>'; return; }
+    el.innerHTML = data.map(r => `
+      <div class="card" id="res-${r.id}">
+        <div class="card-header">
+          <div>
+            <div class="card-title">${esc(r.name)} <span class="badge ${STATUS_BADGE[r.status] || 'badge-new'}">${STATUS_LABELS[r.status] || r.status}</span></div>
+            <div class="info-row">
+              <span>Tel:</span><strong>${esc(r.phone)}</strong>
+              <span>·</span><span>Email:</span><strong>${esc(r.email)}</strong>
+              ${r.package ? `<span>·</span><strong style="color:var(--red)">${esc(r.package)}</strong>` : ''}
+            </div>
+            ${r.date ? `<div class="card-sub" style="margin-top:4px">Dátum: ${r.date}${r.date_end && r.date_end !== r.date ? ' — ' + r.date_end : ''}${r.time ? ' o ' + r.time : ''}</div>` : ''}
+            ${r.message ? `<div class="card-body">${esc(r.message)}</div>` : ''}
+          </div>
+          <div class="card-actions">
+            <select class="status-select" onchange="updateStatus('${r.id}', this.value)">
+              ${['new','contacted','confirmed','declined'].map(s => `<option value="${s}"${r.status===s?' selected':''}>${STATUS_LABELS[s]}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="card-sub" style="margin-top:8px">${new Date(r.created_at).toLocaleString('sk-SK')}</div>
+      </div>
+    `).join('');
+  }
+
+  async function updateStatus(id, status) {
+    await api(`/api/admin-data?type=reservations&id=${id}`, 'PATCH', { status });
+  }
+
+  // ── REFERENCIE ──
+  async function loadTestimonials() {
+    const el = document.getElementById('testimonialsList');
+    el.innerHTML = '<div class="loading">Načítavam...</div>';
+    const data = await api('/api/admin-data?type=testimonials');
+    if (!data || data.length === 0) { el.innerHTML = '<div class="empty">Žiadne referencie. Pridaj prvú!</div>'; return; }
+    el.innerHTML = data.map(t => `
+      <div class="card" id="test-${t.id}">
+        <div class="card-header">
+          <div>
+            <div class="card-title">${esc(t.name)} ${t.role ? `<span class="card-sub" style="font-weight:400">— ${esc(t.role)}</span>` : ''}</div>
+            <div class="card-body" style="margin-top:8px">"${esc(t.body)}"</div>
+          </div>
+          <div class="card-actions">
+            <span class="badge ${t.approved ? 'badge-approved' : 'badge-pending'}">${t.approved ? 'Zobrazená' : 'Skrytá'}</span>
+            <button class="btn btn-secondary btn-sm" onclick="toggleApproved('${t.id}', ${t.approved})">
+              ${t.approved ? 'Skryť' : 'Zverejniť'}
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTestimonial('${t.id}')">Zmazať</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function toggleAddTestimonial() {
+    const f = document.getElementById('addTestimonialForm');
+    f.classList.toggle('open');
+  }
+
+  async function addTestimonial() {
+    const name = document.getElementById('tName').value.trim();
+    const role = document.getElementById('tRole').value.trim();
+    const body = document.getElementById('tBody').value.trim();
+    const display_order = parseInt(document.getElementById('tOrder').value) || 0;
+    const approved = document.getElementById('tApproved').checked;
+    if (!name || !body) { alert('Vyplň meno a text referencie'); return; }
+    await api('/api/admin-data?type=testimonials', 'POST', { name, role: role || null, body, display_order, approved });
+    document.getElementById('tName').value = '';
+    document.getElementById('tRole').value = '';
+    document.getElementById('tBody').value = '';
+    document.getElementById('tOrder').value = '0';
+    document.getElementById('tApproved').checked = false;
+    toggleAddTestimonial();
+    loadTestimonials();
+  }
+
+  async function toggleApproved(id, current) {
+    await api(`/api/admin-data?type=testimonials&id=${id}`, 'PATCH', { approved: !current });
+    loadTestimonials();
+  }
+
+  async function deleteTestimonial(id) {
+    if (!confirm('Naozaj zmazať túto referenciu?')) return;
+    await api(`/api/admin-data?type=testimonials&id=${id}`, 'DELETE');
+    loadTestimonials();
+  }
+
+  // ── BLOKOVANÉ TERMÍNY ──
+  async function loadBlocked() {
+    const el = document.getElementById('blockedList');
+    el.innerHTML = '<div class="loading">Načítavam...</div>';
+    const data = await api('/api/admin-data?type=blocked_dates');
+    if (!data || data.length === 0) { el.innerHTML = '<div class="empty">Žiadne blokované termíny</div>'; return; }
+    el.innerHTML = data.map(b => `
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">${b.date_from} ${b.date_from !== b.date_to ? '— ' + b.date_to : ''}</div>
+            ${b.label ? `<div class="card-sub">${esc(b.label)}</div>` : ''}
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="deleteBlocked('${b.id}')">Zmazať</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function toggleAddBlocked() {
+    document.getElementById('addBlockedForm').classList.toggle('open');
+  }
+
+  async function addBlocked() {
+    const date_from = document.getElementById('bFrom').value;
+    const date_to = document.getElementById('bTo').value;
+    const label = document.getElementById('bLabel').value.trim();
+    if (!date_from || !date_to) { alert('Vyplň dátum od a do'); return; }
+    if (date_to < date_from) { alert('Dátum do musí byť rovnaký alebo neskorší ako od'); return; }
+    await api('/api/admin-data?type=blocked_dates', 'POST', { date_from, date_to, label: label || null });
+    document.getElementById('bFrom').value = '';
+    document.getElementById('bTo').value = '';
+    document.getElementById('bLabel').value = '';
+    toggleAddBlocked();
+    loadBlocked();
+  }
+
+  async function deleteBlocked(id) {
+    if (!confirm('Naozaj odstrániť tento termín?')) return;
+    await api(`/api/admin-data?type=blocked_dates&id=${id}`, 'DELETE');
+    loadBlocked();
+  }
+
+  function esc(str) {
+    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>

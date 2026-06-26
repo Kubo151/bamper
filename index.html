@@ -1111,13 +1111,8 @@
       revealTick(); countTick();
     });
 
-    // --- BLOKOVANÉ TERMÍNY ---
-    // Ručne doplniť keď príde rezervácia. Pre automatické blokovanie treba Supabase.
-    const BLOCKED_DATES = [
-      { from: '2026-06-26', to: '2026-06-28' }
-    ];
-
-    (function(){
+    // --- BLOKOVANÉ TERMÍNY (načítané zo Supabase) ---
+    (async function(){
       const skLocale = {
         firstDayOfWeek: 1,
         weekdays: {
@@ -1130,13 +1125,25 @@
         }
       };
 
+      let blockedDates = [];
+      try {
+        const r = await fetch(
+          'https://pvtwsxgsvasxmflaogci.supabase.co/rest/v1/blocked_dates?order=date_from.asc',
+          { headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2dHdzeGdzdmFzeG1mbGFvZ2NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNjA2MjIsImV4cCI6MjA5NzYzNjYyMn0.RKYGJMP-UhLE8x1CVZmYC3tfkKz5FAxNVsZG1JLxuG8' } }
+        );
+        if (r.ok) {
+          const rows = await r.json();
+          blockedDates = rows.map(b => ({ from: b.date_from, to: b.date_to }));
+        }
+      } catch(_) {}
+
       const shared = {
         locale: skLocale,
         dateFormat: 'Y-m-d',
         altInput: true,
         altFormat: 'j. F Y',
         minDate: 'today',
-        disable: BLOCKED_DATES,
+        disable: blockedDates,
         disableMobile: false
       };
 
