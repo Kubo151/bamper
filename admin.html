@@ -403,6 +403,7 @@
               <span>Tel:</span><strong>${esc(r.phone)}</strong>
               <span>·</span><span>Email:</span><strong>${esc(r.email)}</strong>
               ${r.package ? `<span>·</span><strong style="color:var(--red)">${esc(r.package)}</strong>` : ''}
+              ${r.tier ? `<span>·</span><strong style="color:var(--red)">${esc(r.tier)}</strong>` : ''}
             </div>
             ${r.date ? `<div class="card-sub" style="margin-top:4px">Dátum: ${r.date}${r.date_end && r.date_end !== r.date ? ' — ' + r.date_end : ''}${r.time ? ' o ' + r.time : ''}</div>` : ''}
             ${r.message ? `<div class="card-body">${esc(r.message)}</div>` : ''}

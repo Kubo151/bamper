@@ -3,7 +3,7 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { name, phone, email, date, date_end, time, type, package: pkg, prep, message } = req.body || {};
+  const { name, phone, email, date, date_end, time, type, package: pkg, tier, prep, message } = req.body || {};
 
   if (!name || !phone || !email) {
     return res.status(400).json({ error: 'Chýbajú povinné polia' });
@@ -42,6 +42,7 @@ module.exports = async function handler(req, res) {
         <td style="padding:8px 0;font-weight:600"><a href="mailto:${h(email)}" style="color:#E8141B;text-decoration:none">${h(email)}</a></td>
       </tr>
       ${pkg ? `<tr><td style="padding:8px 0;color:#7b8089;vertical-align:top">Záujem o</td><td style="padding:8px 0;font-weight:600;color:#E8141B">${h(pkg)}</td></tr>` : ''}
+      ${tier ? `<tr><td style="padding:8px 0;color:#7b8089;vertical-align:top">Balíček</td><td style="padding:8px 0;font-weight:600;color:#E8141B">${h(tier)}</td></tr>` : ''}
       ${type ? `<tr><td style="padding:8px 0;color:#7b8089;vertical-align:top">Typ akcie</td><td style="padding:8px 0;color:#15171c">${h(type)}</td></tr>` : ''}
       ${date ? `<tr><td style="padding:8px 0;color:#7b8089;vertical-align:top">Dátum akcie</td><td style="padding:8px 0;color:#15171c">${h(date)}${date_end && date_end !== date ? ` — ${h(date_end)}` : ''}${time ? ` o ${h(time)}` : ''}</td></tr>` : ''}
       ${prep === 'yes' ? `<tr><td style="padding:8px 0;color:#7b8089;vertical-align:top">Príprava</td><td style="padding:8px 0;color:#15171c">Požaduje montáž deň vopred</td></tr>` : ''}
@@ -65,6 +66,7 @@ module.exports = async function handler(req, res) {
       Ďakujeme, ${h(name.split(' ')[0])}! Váš dopyt sme dostali a ozveme sa vám do <strong>24 hodín</strong> s ponukou na mieru.
     </p>
     ${pkg ? `<div style="background:#f6f6f7;border-radius:8px;padding:16px;margin-bottom:20px;font-size:14px;color:#3a3d44"><strong>Záujem o:</strong> ${h(pkg)}</div>` : ''}
+    ${tier ? `<div style="background:#f6f6f7;border-radius:8px;padding:16px;margin-bottom:20px;font-size:14px;color:#3a3d44"><strong>Balíček:</strong> ${h(tier)}</div>` : ''}
     ${date ? `<div style="background:#f6f6f7;border-radius:8px;padding:16px;margin-bottom:20px;font-size:14px;color:#3a3d44"><strong>Dátum:</strong> ${h(date)}${date_end && date_end !== date ? ` — ${h(date_end)}` : ''}</div>` : ''}
     <p style="margin:0 0 24px;color:#3a3d44;font-size:14px;line-height:1.7">
       Ak potrebujete niečo doplniť alebo máte otázku, napíšte nám priamo na tento email alebo zavolajte.
@@ -93,6 +95,7 @@ module.exports = async function handler(req, res) {
           body: JSON.stringify({
             name, phone, email,
             package: pkg || null,
+            tier: tier || null,
             date: date || null,
             date_end: date_end || null,
             type: type || null,

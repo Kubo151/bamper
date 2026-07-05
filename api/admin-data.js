@@ -62,6 +62,7 @@ async function sendStatusEmail(status, r) {
     </p>
     ${dateStr ? `<div style="background:#f6f6f7;border-radius:8px;padding:16px;margin-bottom:20px;font-size:14px;color:#3a3d44"><strong>Dátum:</strong> ${h(dateStr)}</div>` : ''}
     ${r.package ? `<div style="background:#f6f6f7;border-radius:8px;padding:16px;margin-bottom:20px;font-size:14px;color:#3a3d44"><strong>Balík:</strong> ${h(r.package)}</div>` : ''}
+    ${r.tier ? `<div style="background:#f6f6f7;border-radius:8px;padding:16px;margin-bottom:20px;font-size:14px;color:#3a3d44"><strong>Balíček:</strong> ${h(r.tier)}</div>` : ''}
     <p style="margin:0 0 24px;color:#3a3d44;font-size:14px;line-height:1.7">
       V prípade otázok nás kontaktuj na tento email alebo cez WhatsApp.
     </p>
@@ -130,7 +131,7 @@ module.exports = async function handler(req, res) {
         const newStatus = req.body.status;
 
         // Fetch current reservation pre side-effects
-        const rows = await sb(`/reservations?id=eq.${id}&select=name,email,date,date_end,package,status`);
+        const rows = await sb(`/reservations?id=eq.${id}&select=name,email,date,date_end,package,tier,status`);
         const current = rows?.[0];
 
         // Update status
