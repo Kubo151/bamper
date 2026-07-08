@@ -344,6 +344,35 @@
   @media(max-width:560px){
     .test-grid{grid-template-columns:1fr}
   }
+  .test-media[data-lightbox]{cursor:zoom-in}
+
+  /* ---------- LIGHTBOX ---------- */
+  .lightbox{
+    display:none;position:fixed;inset:0;z-index:10000;
+    background:rgba(10,10,12,.92);
+    align-items:center;justify-content:center;
+    padding:60px;
+  }
+  .lightbox.open{display:flex}
+  .lightbox-img{max-width:100%;max-height:100%;border-radius:12px;box-shadow:0 30px 70px -20px rgba(0,0,0,.6);object-fit:contain}
+  .lightbox-close, .lightbox-nav{
+    position:fixed;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);
+    color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;transition:background .2s;
+  }
+  .lightbox-close:hover, .lightbox-nav:hover{background:rgba(255,255,255,.18)}
+  .lightbox-close{top:24px;right:24px;width:44px;height:44px;font-size:24px;line-height:1}
+  .lightbox-nav{top:50%;transform:translateY(-50%);width:52px;height:52px;font-size:30px;line-height:1}
+  .lightbox-prev{left:24px}
+  .lightbox-next{right:24px}
+  .lightbox-nav.hidden{display:none}
+  @media(max-width:560px){
+    .lightbox{padding:20px}
+    .lightbox-nav{width:42px;height:42px;font-size:24px}
+    .lightbox-prev{left:8px}
+    .lightbox-next{right:8px}
+    .lightbox-close{top:12px;right:12px;width:38px;height:38px}
+  }
 
   /* ---------- CTA ---------- */
   .cta-sec{padding:24px 0 80px}
@@ -1080,6 +1109,14 @@
 
   </div><!-- /zoom-wrap -->
 
+  <!-- REFERENCIE LIGHTBOX -->
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <button class="lightbox-close" id="lightboxClose" aria-label="Zavrieť">&times;</button>
+    <button class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Predchádzajúca fotka">&#8249;</button>
+    <img class="lightbox-img" id="lightboxImg" src="" alt="">
+    <button class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Ďalšia fotka">&#8250;</button>
+  </div>
+
   <!-- MOBILE NAV OVERLAY -->
   <div class="mob-overlay" id="mobOverlay" aria-hidden="true">
     <nav class="mob-menu" aria-label="Mobilná navigácia">
@@ -1204,6 +1241,49 @@
       function esc(str){
         return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
       }
+
+      // Lightbox (funguje nezávisle od toho, či sa referencie podarí načítať)
+      let lbGalleries = [];
+      let lbT = 0, lbI = 0;
+      const lightboxEl = document.getElementById('lightbox');
+      const lightboxImg = document.getElementById('lightboxImg');
+      const lbPrev = document.getElementById('lightboxPrev');
+      const lbNext = document.getElementById('lightboxNext');
+
+      function renderLightbox(){
+        const imgs = lbGalleries[lbT] || [];
+        lightboxImg.src = imgs[lbI];
+        const multi = imgs.length > 1;
+        lbPrev.classList.toggle('hidden', !multi);
+        lbNext.classList.toggle('hidden', !multi);
+      }
+      function openLightbox(ti, idx){
+        lbT = ti; lbI = idx;
+        renderLightbox();
+        lightboxEl.classList.add('open');
+        lightboxEl.setAttribute('aria-hidden', 'false');
+      }
+      function closeLightbox(){
+        lightboxEl.classList.remove('open');
+        lightboxEl.setAttribute('aria-hidden', 'true');
+      }
+      function lbStep(delta){
+        const imgs = lbGalleries[lbT] || [];
+        if (!imgs.length) return;
+        lbI = (lbI + delta + imgs.length) % imgs.length;
+        renderLightbox();
+      }
+      document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+      lbPrev.addEventListener('click', () => lbStep(-1));
+      lbNext.addEventListener('click', () => lbStep(1));
+      lightboxEl.addEventListener('click', e => { if (e.target === lightboxEl) closeLightbox(); });
+      document.addEventListener('keydown', e => {
+        if (!lightboxEl.classList.contains('open')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') lbStep(-1);
+        if (e.key === 'ArrowRight') lbStep(1);
+      });
+
       try {
         const r = await fetch(
           'https://pvtwsxgsvasxmflaogci.supabase.co/rest/v1/testimonials?approved=eq.true&order=display_order.asc,created_at.desc',
@@ -1213,13 +1293,15 @@
         const rows = await r.json();
         if (!rows.length) return;
 
-        document.getElementById('testGrid').innerHTML = rows.map(t => {
+        lbGalleries = rows.map(t => (t.media || []).filter(m => m.type !== 'video').map(m => m.url));
+
+        document.getElementById('testGrid').innerHTML = rows.map((t, ti) => {
           const media = t.media || [];
           const mediaHtml = media.length ? `
             <div class="test-media-grid${media.length === 1 ? ' single' : ''}">
               ${media.map(m => m.type === 'video'
                 ? `<video class="test-media" src="${esc(m.url)}" controls muted playsinline></video>`
-                : `<img class="test-media" src="${esc(m.url)}" alt="" loading="lazy">`
+                : `<img class="test-media" src="${esc(m.url)}" alt="" loading="lazy" data-lightbox data-t="${ti}" data-url="${esc(m.url)}">`
               ).join('')}
             </div>` : '';
           return `
@@ -1234,6 +1316,14 @@
           `;
         }).join('');
         document.getElementById('referencie').style.display = '';
+
+        document.getElementById('testGrid').addEventListener('click', e => {
+          const img = e.target.closest('img[data-lightbox]');
+          if (!img) return;
+          const ti = parseInt(img.dataset.t, 10);
+          const idx = lbGalleries[ti].indexOf(img.dataset.url);
+          openLightbox(ti, idx);
+        });
       } catch(_) {}
     })();
 
