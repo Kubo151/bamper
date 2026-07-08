@@ -139,15 +139,29 @@
   .card-body { margin-top: 12px; font-size: 14px; color: var(--ink-soft); line-height: 1.6; }
   .card-actions { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
 
-  .media-thumb { margin-top: 12px; }
-  .media-thumb img, .media-thumb video { max-width: 220px; max-height: 160px; border-radius: 8px; display: block; border: 1px solid var(--line); }
+  .media-gallery { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+  .media-item { position: relative; width: 100px; height: 100px; flex-shrink: 0; }
+  .media-item img, .media-item video { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); display: block; }
+  .media-item-remove {
+    position: absolute; top: -7px; right: -7px;
+    display: flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 50%; border: none;
+    background: var(--ink); color: #fff; font-size: 13px; line-height: 1; cursor: pointer;
+  }
+  .media-item-remove:hover { background: var(--red); }
   .media-upload-progress { font-size: 12px; color: var(--muted); margin-top: 6px; }
-  .media-selected { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; color: var(--ink-soft); }
+  .media-selected { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .media-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--soft); padding: 4px 6px 4px 12px; border-radius: 99px;
+    font-size: 13px; color: var(--ink-soft);
+  }
   .media-clear-btn {
     display: flex; align-items: center; justify-content: center;
     width: 20px; height: 20px; border-radius: 50%; border: none;
     background: var(--soft); color: var(--muted); font-size: 15px; line-height: 1; cursor: pointer;
   }
+  .media-chip .media-clear-btn { background: #fff; }
   .media-clear-btn:hover { background: var(--red); color: #fff; }
 
   .badge {
@@ -276,12 +290,9 @@
         <div class="field"><label>Rola / firma (nepovinné)</label><input type="text" id="tRole" placeholder="Organizátor podujatia"></div>
         <div class="field"><label>Text referencie</label><textarea id="tBody" placeholder="Super zážitok, určite odporúčam..."></textarea></div>
         <div class="field">
-          <label>Fotka / video (nepovinné, max 50 MB)</label>
-          <input type="file" id="tMedia" accept="image/*,video/*" onchange="showMediaPreview()">
-          <div class="media-selected" id="tMediaPreview" style="display:none">
-            <span id="tMediaName"></span>
-            <button type="button" class="media-clear-btn" onclick="clearMediaSelection()">&times;</button>
-          </div>
+          <label>Fotky / videá (nepovinné, max 50 MB / súbor)</label>
+          <input type="file" id="tMedia" accept="image/*,video/*" multiple onchange="handleMediaSelect(this)">
+          <div class="media-selected" id="tMediaPreview" style="display:none"></div>
         </div>
         <div class="form-row">
           <div class="field"><label>Poradie zobrazenia</label><input type="number" id="tOrder" value="0" min="0"></div>
@@ -447,32 +458,50 @@
   }
 
   // ── REFERENCIE ──
+  let TESTIMONIALS = [];
+
+  function mediaItemHtml(id, m, i) {
+    return `
+      <div class="media-item">
+        ${m.type === 'video' ? `<video src="${esc(m.url)}" controls></video>` : `<img src="${esc(m.url)}" alt="">`}
+        <button type="button" class="media-item-remove" onclick="removeMediaItem('${id}', ${i})">&times;</button>
+      </div>`;
+  }
+
   async function loadTestimonials() {
     const el = document.getElementById('testimonialsList');
     el.innerHTML = '<div class="loading">Načítavam...</div>';
     const data = await api('/api/admin-data?type=testimonials');
+    TESTIMONIALS = data || [];
     if (!data || data.length === 0) { el.innerHTML = '<div class="empty">Žiadne referencie. Pridaj prvú!</div>'; return; }
     el.innerHTML = data.map(t => `
       <div class="card" id="test-${t.id}">
         <div class="card-header">
-          <div>
-            <div class="card-title">${esc(t.name)} ${t.role ? `<span class="card-sub" style="font-weight:400">— ${esc(t.role)}</span>` : ''}</div>
-            <div class="card-body" style="margin-top:8px">"${esc(t.body)}"</div>
-            ${t.media_url ? `
-              <div class="media-thumb">
-                ${t.media_type === 'video'
-                  ? `<video src="${esc(t.media_url)}" controls></video>`
-                  : `<img src="${esc(t.media_url)}" alt="">`}
-              </div>` : ''}
-            <input type="file" accept="image/*,video/*" id="tMediaFile-${t.id}" style="display:none" onchange="replaceMedia('${t.id}', this.files[0])">
+          <div style="flex:1">
+            <div id="test-view-${t.id}">
+              <div class="card-title">${esc(t.name)} ${t.role ? `<span class="card-sub" style="font-weight:400">— ${esc(t.role)}</span>` : ''}</div>
+              <div class="card-body" style="margin-top:8px">"${esc(t.body)}"</div>
+            </div>
+            <div class="add-form" id="test-edit-${t.id}" style="margin-top:12px">
+              <div class="field"><label>Meno</label><input type="text" id="teName-${t.id}" value="${esc(t.name)}"></div>
+              <div class="field"><label>Rola / firma (nepovinné)</label><input type="text" id="teRole-${t.id}" value="${esc(t.role || '')}"></div>
+              <div class="field"><label>Text referencie</label><textarea id="teBody-${t.id}">${esc(t.body)}</textarea></div>
+              <div class="field"><label>Poradie zobrazenia</label><input type="number" id="teOrder-${t.id}" value="${t.display_order}" min="0"></div>
+              <div class="form-actions">
+                <button class="btn btn-primary btn-sm" onclick="saveEdit('${t.id}')">Uložiť</button>
+                <button class="btn btn-secondary btn-sm" onclick="toggleEdit('${t.id}')">Zrušiť</button>
+              </div>
+            </div>
+            <div class="media-gallery" id="test-gallery-${t.id}">
+              ${(t.media || []).map((m, i) => mediaItemHtml(t.id, m, i)).join('')}
+            </div>
+            <input type="file" accept="image/*,video/*" id="tMediaFile-${t.id}" multiple style="display:none" onchange="addMoreMedia('${t.id}', this.files); this.value=''">
             <div class="media-upload-progress" id="tMediaStatus-${t.id}"></div>
           </div>
           <div class="card-actions">
             <span class="badge ${t.approved ? 'badge-approved' : 'badge-pending'}">${t.approved ? 'Zobrazená' : 'Skrytá'}</span>
-            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('tMediaFile-${t.id}').click()">
-              ${t.media_url ? 'Zmeniť médium' : '+ Fotka/video'}
-            </button>
-            ${t.media_url ? `<button class="btn btn-secondary btn-sm" onclick="removeMedia('${t.id}')">Odstrániť médium</button>` : ''}
+            <button class="btn btn-secondary btn-sm" onclick="toggleEdit('${t.id}')">Upraviť</button>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('tMediaFile-${t.id}').click()">+ Fotka/video</button>
             <button class="btn btn-secondary btn-sm" onclick="toggleApproved('${t.id}', ${t.approved})">
               ${t.approved ? 'Skryť' : 'Zverejniť'}
             </button>
@@ -483,17 +512,41 @@
     `).join('');
   }
 
-  function showMediaPreview() {
-    const file = document.getElementById('tMedia').files[0];
-    const preview = document.getElementById('tMediaPreview');
-    if (!file) { preview.style.display = 'none'; return; }
-    document.getElementById('tMediaName').textContent = file.name;
-    preview.style.display = 'flex';
+  function toggleEdit(id) {
+    const editing = document.getElementById(`test-edit-${id}`).classList.toggle('open');
+    document.getElementById(`test-view-${id}`).style.display = editing ? 'none' : '';
   }
 
-  function clearMediaSelection() {
-    document.getElementById('tMedia').value = '';
-    document.getElementById('tMediaPreview').style.display = 'none';
+  async function saveEdit(id) {
+    const name = document.getElementById(`teName-${id}`).value.trim();
+    const role = document.getElementById(`teRole-${id}`).value.trim();
+    const body = document.getElementById(`teBody-${id}`).value.trim();
+    const display_order = parseInt(document.getElementById(`teOrder-${id}`).value) || 0;
+    if (!name || !body) { alert('Vyplň meno a text referencie'); return; }
+    await api(`/api/admin-data?type=testimonials&id=${id}`, 'PATCH', { name, role: role || null, body, display_order });
+    loadTestimonials();
+  }
+
+  let pendingMediaFiles = [];
+
+  function handleMediaSelect(input) {
+    pendingMediaFiles.push(...input.files);
+    input.value = '';
+    renderPendingMedia();
+  }
+
+  function removePendingMedia(index) {
+    pendingMediaFiles.splice(index, 1);
+    renderPendingMedia();
+  }
+
+  function renderPendingMedia() {
+    const el = document.getElementById('tMediaPreview');
+    if (!pendingMediaFiles.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+    el.style.display = 'flex';
+    el.innerHTML = pendingMediaFiles.map((f, i) => `
+      <span class="media-chip">${esc(f.name)}<button type="button" class="media-clear-btn" onclick="removePendingMedia(${i})">&times;</button></span>
+    `).join('');
   }
 
   async function uploadMedia(file, statusEl) {
@@ -516,18 +569,25 @@
     return { media_url: publicUrl, media_type: file.type.startsWith('video/') ? 'video' : 'image' };
   }
 
-  async function replaceMedia(id, file) {
-    if (!file) return;
+  async function addMoreMedia(id, files) {
     const statusEl = document.getElementById(`tMediaStatus-${id}`);
-    const media = await uploadMedia(file, statusEl);
-    if (!media) return;
-    await api(`/api/admin-data?type=testimonials&id=${id}`, 'PATCH', media);
+    const newItems = [];
+    for (const file of files) {
+      const result = await uploadMedia(file, statusEl);
+      if (result) newItems.push({ url: result.media_url, type: result.media_type });
+    }
+    if (!newItems.length) return;
+    const current = TESTIMONIALS.find(t => t.id === id);
+    const media = [...(current?.media || []), ...newItems];
+    await api(`/api/admin-data?type=testimonials&id=${id}`, 'PATCH', { media });
     loadTestimonials();
   }
 
-  async function removeMedia(id) {
-    if (!confirm('Odstrániť fotku/video z tejto referencie?')) return;
-    await api(`/api/admin-data?type=testimonials&id=${id}`, 'PATCH', { media_url: null, media_type: null });
+  async function removeMediaItem(id, index) {
+    if (!confirm('Odstrániť túto fotku/video?')) return;
+    const current = TESTIMONIALS.find(t => t.id === id);
+    const media = (current?.media || []).filter((_, i) => i !== index);
+    await api(`/api/admin-data?type=testimonials&id=${id}`, 'PATCH', { media });
     loadTestimonials();
   }
 
@@ -542,25 +602,25 @@
     const body = document.getElementById('tBody').value.trim();
     const display_order = parseInt(document.getElementById('tOrder').value) || 0;
     const approved = document.getElementById('tApproved').checked;
-    const file = document.getElementById('tMedia').files[0];
     if (!name || !body) { alert('Vyplň meno a text referencie'); return; }
 
     const saveBtn = document.getElementById('tSaveBtn');
     saveBtn.disabled = true;
-    let media = {};
-    if (file) {
+    const media = [];
+    for (const file of pendingMediaFiles) {
       const result = await uploadMedia(file, document.getElementById('tMediaStatus'));
       if (!result) { saveBtn.disabled = false; return; }
-      media = result;
+      media.push({ url: result.media_url, type: result.media_type });
     }
 
-    await api('/api/admin-data?type=testimonials', 'POST', { name, role: role || null, body, display_order, approved, ...media });
+    await api('/api/admin-data?type=testimonials', 'POST', { name, role: role || null, body, display_order, approved, media });
     document.getElementById('tName').value = '';
     document.getElementById('tRole').value = '';
     document.getElementById('tBody').value = '';
     document.getElementById('tOrder').value = '0';
     document.getElementById('tApproved').checked = false;
-    clearMediaSelection();
+    pendingMediaFiles = [];
+    renderPendingMedia();
     document.getElementById('tMediaStatus').textContent = '';
     saveBtn.disabled = false;
     toggleAddTestimonial();

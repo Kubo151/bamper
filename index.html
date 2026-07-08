@@ -333,7 +333,10 @@
     padding:28px;transition:transform .25s ease, box-shadow .25s ease;
   }
   .test-card:hover{transform:translateY(-6px);box-shadow:var(--shadow)}
-  .test-media{width:100%;height:180px;object-fit:cover;border-radius:14px;margin-bottom:20px;display:block;background:var(--soft)}
+  .test-media-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:20px;border-radius:14px;overflow:hidden}
+  .test-media-grid.single{grid-template-columns:1fr}
+  .test-media{width:100%;height:130px;object-fit:cover;display:block;background:var(--soft)}
+  .test-media-grid.single .test-media{height:180px}
   .test-body{color:var(--ink-soft);font-size:14.5px;line-height:1.7}
   .test-author{display:flex;align-items:baseline;gap:8px;margin-top:16px;flex-wrap:wrap}
   .test-name{font-family:var(--display);font-weight:700;font-size:14.5px;color:var(--ink)}
@@ -1210,20 +1213,26 @@
         const rows = await r.json();
         if (!rows.length) return;
 
-        document.getElementById('testGrid').innerHTML = rows.map(t => `
-          <div class="test-card">
-            ${t.media_url ? (
-              t.media_type === 'video'
-                ? `<video class="test-media" src="${esc(t.media_url)}" controls muted playsinline></video>`
-                : `<img class="test-media" src="${esc(t.media_url)}" alt="" loading="lazy">`
-            ) : ''}
-            <p class="test-body">"${esc(t.body)}"</p>
-            <div class="test-author">
-              <span class="test-name">${esc(t.name)}</span>
-              ${t.role ? `<span class="test-role">— ${esc(t.role)}</span>` : ''}
+        document.getElementById('testGrid').innerHTML = rows.map(t => {
+          const media = t.media || [];
+          const mediaHtml = media.length ? `
+            <div class="test-media-grid${media.length === 1 ? ' single' : ''}">
+              ${media.map(m => m.type === 'video'
+                ? `<video class="test-media" src="${esc(m.url)}" controls muted playsinline></video>`
+                : `<img class="test-media" src="${esc(m.url)}" alt="" loading="lazy">`
+              ).join('')}
+            </div>` : '';
+          return `
+            <div class="test-card">
+              ${mediaHtml}
+              <p class="test-body">"${esc(t.body)}"</p>
+              <div class="test-author">
+                <span class="test-name">${esc(t.name)}</span>
+                ${t.role ? `<span class="test-role">— ${esc(t.role)}</span>` : ''}
+              </div>
             </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
         document.getElementById('referencie').style.display = '';
       } catch(_) {}
     })();

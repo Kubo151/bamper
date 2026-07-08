@@ -175,10 +175,12 @@ module.exports = async function handler(req, res) {
       if (!id) return res.status(400).json({ error: 'Chýba id' });
 
       if (type === 'testimonials') {
-        if ('media_url' in req.body) {
-          const rows = await sb(`/testimonials?id=eq.${id}&select=media_url`);
-          const oldUrl = rows?.[0]?.media_url;
-          if (oldUrl && oldUrl !== req.body.media_url) await deleteMediaObject(mediaPathFromUrl(oldUrl));
+        if ('media' in req.body) {
+          const rows = await sb(`/testimonials?id=eq.${id}&select=media`);
+          const oldMedia = rows?.[0]?.media || [];
+          const newUrls = new Set((req.body.media || []).map(m => m.url));
+          const removed = oldMedia.filter(m => !newUrls.has(m.url));
+          for (const m of removed) await deleteMediaObject(mediaPathFromUrl(m.url));
         }
         return res.json(await sb(`/testimonials?id=eq.${id}`, 'PATCH', req.body));
       }
@@ -221,8 +223,9 @@ module.exports = async function handler(req, res) {
     if (req.method === 'DELETE') {
       if (!id) return res.status(400).json({ error: 'Chýba id' });
       if (type === 'testimonials') {
-        const rows = await sb(`/testimonials?id=eq.${id}&select=media_url`);
-        await deleteMediaObject(mediaPathFromUrl(rows?.[0]?.media_url));
+        const rows = await sb(`/testimonials?id=eq.${id}&select=media`);
+        const media = rows?.[0]?.media || [];
+        for (const m of media) await deleteMediaObject(mediaPathFromUrl(m.url));
         await sb(`/testimonials?id=eq.${id}`, 'DELETE');
         return res.status(204).end();
       }
