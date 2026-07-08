@@ -325,6 +325,23 @@
   .ride-row span{color:rgba(255,255,255,.6)}
   .ride-row strong{color:#fff;font-weight:700;font-family:var(--display)}
 
+  /* ---------- TESTIMONIALS ---------- */
+  .testimonials{padding:72px 0}
+  .test-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;margin-top:44px}
+  .test-card{
+    background:#fff;border:1px solid var(--line);border-radius:var(--r);
+    padding:28px;transition:transform .25s ease, box-shadow .25s ease;
+  }
+  .test-card:hover{transform:translateY(-6px);box-shadow:var(--shadow)}
+  .test-media{width:100%;height:180px;object-fit:cover;border-radius:14px;margin-bottom:20px;display:block;background:var(--soft)}
+  .test-body{color:var(--ink-soft);font-size:14.5px;line-height:1.7}
+  .test-author{display:flex;align-items:baseline;gap:8px;margin-top:16px;flex-wrap:wrap}
+  .test-name{font-family:var(--display);font-weight:700;font-size:14.5px;color:var(--ink)}
+  .test-role{font-size:13px;color:var(--muted)}
+  @media(max-width:560px){
+    .test-grid{grid-template-columns:1fr}
+  }
+
   /* ---------- CTA ---------- */
   .cta-sec{padding:24px 0 80px}
   .cta{
@@ -804,6 +821,17 @@
     </div>
   </section>
 
+  <!-- REFERENCIE -->
+  <section class="testimonials" id="referencie" style="display:none">
+    <div class="wrap">
+      <div class="reveal">
+        <div class="sec-tag">Referencie</div>
+        <h2>Čo hovoria<br>naši zákazníci</h2>
+      </div>
+      <div class="test-grid" id="testGrid"></div>
+    </div>
+  </section>
+
   <!-- FAQ -->
   <section class="faq" id="faq">
     <div class="wrap faq-wrap">
@@ -1166,6 +1194,38 @@
       });
 
       const pickerTo = flatpickr('#f-date-end', { ...shared });
+    })();
+
+    // --- REFERENCIE (schválené, načítané zo Supabase) ---
+    (async function(){
+      function esc(str){
+        return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      }
+      try {
+        const r = await fetch(
+          'https://pvtwsxgsvasxmflaogci.supabase.co/rest/v1/testimonials?approved=eq.true&order=display_order.asc,created_at.desc',
+          { headers: { apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2dHdzeGdzdmFzeG1mbGFvZ2NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNjA2MjIsImV4cCI6MjA5NzYzNjYyMn0.RKYGJMP-UhLE8x1CVZmYC3tfkKz5FAxNVsZG1JLxuG8' } }
+        );
+        if (!r.ok) return;
+        const rows = await r.json();
+        if (!rows.length) return;
+
+        document.getElementById('testGrid').innerHTML = rows.map(t => `
+          <div class="test-card">
+            ${t.media_url ? (
+              t.media_type === 'video'
+                ? `<video class="test-media" src="${esc(t.media_url)}" controls muted playsinline></video>`
+                : `<img class="test-media" src="${esc(t.media_url)}" alt="" loading="lazy">`
+            ) : ''}
+            <p class="test-body">"${esc(t.body)}"</p>
+            <div class="test-author">
+              <span class="test-name">${esc(t.name)}</span>
+              ${t.role ? `<span class="test-role">— ${esc(t.role)}</span>` : ''}
+            </div>
+          </div>
+        `).join('');
+        document.getElementById('referencie').style.display = '';
+      } catch(_) {}
     })();
 
     // --- FAQ ACCORDION ---
