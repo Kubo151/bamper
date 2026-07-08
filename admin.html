@@ -139,6 +139,10 @@
   .card-body { margin-top: 12px; font-size: 14px; color: var(--ink-soft); line-height: 1.6; }
   .card-actions { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
 
+  .media-thumb { margin-top: 12px; }
+  .media-thumb img, .media-thumb video { max-width: 220px; max-height: 160px; border-radius: 8px; display: block; border: 1px solid var(--line); }
+  .media-upload-progress { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
   .badge {
     display: inline-block;
     padding: 2px 8px;
@@ -264,6 +268,7 @@
         <div class="field"><label>Meno</label><input type="text" id="tName" placeholder="Ján Novák"></div>
         <div class="field"><label>Rola / firma (nepovinné)</label><input type="text" id="tRole" placeholder="Organizátor podujatia"></div>
         <div class="field"><label>Text referencie</label><textarea id="tBody" placeholder="Super zážitok, určite odporúčam..."></textarea></div>
+        <div class="field"><label>Fotka / video (nepovinné, max 50 MB)</label><input type="file" id="tMedia" accept="image/*,video/*"></div>
         <div class="form-row">
           <div class="field"><label>Poradie zobrazenia</label><input type="number" id="tOrder" value="0" min="0"></div>
           <div class="field" style="justify-content:flex-end">
@@ -271,8 +276,9 @@
             <label class="toggle-approved"><input type="checkbox" id="tApproved"> Zobraziť na stránke</label>
           </div>
         </div>
+        <div class="media-upload-progress" id="tMediaStatus"></div>
         <div class="form-actions">
-          <button class="btn btn-primary" onclick="addTestimonial()">Uložiť</button>
+          <button class="btn btn-primary" id="tSaveBtn" onclick="addTestimonial()">Uložiť</button>
           <button class="btn btn-secondary" onclick="toggleAddTestimonial()">Zrušiť</button>
         </div>
       </div>
@@ -320,6 +326,9 @@
       icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
     }
   }
+
+  const SUPABASE_URL = 'https://pvtwsxgsvasxmflaogci.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2dHdzeGdzdmFzeG1mbGFvZ2NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNjA2MjIsImV4cCI6MjA5NzYzNjYyMn0.RKYGJMP-UhLE8x1CVZmYC3tfkKz5FAxNVsZG1JLxuG8';
 
   let TOKEN = sessionStorage.getItem('bamper_admin_token') || '';
 
@@ -435,9 +444,21 @@
           <div>
             <div class="card-title">${esc(t.name)} ${t.role ? `<span class="card-sub" style="font-weight:400">— ${esc(t.role)}</span>` : ''}</div>
             <div class="card-body" style="margin-top:8px">"${esc(t.body)}"</div>
+            ${t.media_url ? `
+              <div class="media-thumb">
+                ${t.media_type === 'video'
+                  ? `<video src="${esc(t.media_url)}" controls></video>`
+                  : `<img src="${esc(t.media_url)}" alt="">`}
+              </div>` : ''}
+            <input type="file" accept="image/*,video/*" id="tMediaFile-${t.id}" style="display:none" onchange="replaceMedia('${t.id}', this.files[0])">
+            <div class="media-upload-progress" id="tMediaStatus-${t.id}"></div>
           </div>
           <div class="card-actions">
             <span class="badge ${t.approved ? 'badge-approved' : 'badge-pending'}">${t.approved ? 'Zobrazená' : 'Skrytá'}</span>
+            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('tMediaFile-${t.id}').click()">
+              ${t.media_url ? 'Zmeniť médium' : '+ Fotka/video'}
+            </button>
+            ${t.media_url ? `<button class="btn btn-secondary btn-sm" onclick="removeMedia('${t.id}')">Odstrániť médium</button>` : ''}
             <button class="btn btn-secondary btn-sm" onclick="toggleApproved('${t.id}', ${t.approved})">
               ${t.approved ? 'Skryť' : 'Zverejniť'}
             </button>
@@ -446,6 +467,41 @@
         </div>
       </div>
     `).join('');
+  }
+
+  async function uploadMedia(file, statusEl) {
+    const setStatus = msg => { if (statusEl) statusEl.textContent = msg; };
+    setStatus('Nahrávam...');
+    const { signedUrl, publicUrl, error } = await api('/api/admin-data?type=upload-url', 'POST', { contentType: file.type });
+    if (error || !signedUrl) { setStatus('Chyba: ' + (error || 'nepodarilo sa pripraviť upload')); return null; }
+
+    const form = new FormData();
+    form.append('cacheControl', '3600');
+    form.append('', file);
+    const res = await fetch(signedUrl, {
+      method: 'PUT',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'x-upsert': 'false' },
+      body: form,
+    });
+    if (!res.ok) { setStatus('Nahrávanie zlyhalo'); return null; }
+
+    setStatus('Hotovo');
+    return { media_url: publicUrl, media_type: file.type.startsWith('video/') ? 'video' : 'image' };
+  }
+
+  async function replaceMedia(id, file) {
+    if (!file) return;
+    const statusEl = document.getElementById(`tMediaStatus-${id}`);
+    const media = await uploadMedia(file, statusEl);
+    if (!media) return;
+    await api(`/api/admin-data?type=testimonials&id=${id}`, 'PATCH', media);
+    loadTestimonials();
+  }
+
+  async function removeMedia(id) {
+    if (!confirm('Odstrániť fotku/video z tejto referencie?')) return;
+    await api(`/api/admin-data?type=testimonials&id=${id}`, 'PATCH', { media_url: null, media_type: null });
+    loadTestimonials();
   }
 
   function toggleAddTestimonial() {
@@ -459,13 +515,27 @@
     const body = document.getElementById('tBody').value.trim();
     const display_order = parseInt(document.getElementById('tOrder').value) || 0;
     const approved = document.getElementById('tApproved').checked;
+    const file = document.getElementById('tMedia').files[0];
     if (!name || !body) { alert('Vyplň meno a text referencie'); return; }
-    await api('/api/admin-data?type=testimonials', 'POST', { name, role: role || null, body, display_order, approved });
+
+    const saveBtn = document.getElementById('tSaveBtn');
+    saveBtn.disabled = true;
+    let media = {};
+    if (file) {
+      const result = await uploadMedia(file, document.getElementById('tMediaStatus'));
+      if (!result) { saveBtn.disabled = false; return; }
+      media = result;
+    }
+
+    await api('/api/admin-data?type=testimonials', 'POST', { name, role: role || null, body, display_order, approved, ...media });
     document.getElementById('tName').value = '';
     document.getElementById('tRole').value = '';
     document.getElementById('tBody').value = '';
     document.getElementById('tOrder').value = '0';
     document.getElementById('tApproved').checked = false;
+    document.getElementById('tMedia').value = '';
+    document.getElementById('tMediaStatus').textContent = '';
+    saveBtn.disabled = false;
     toggleAddTestimonial();
     loadTestimonials();
   }

@@ -8,6 +8,31 @@ const RESEND_KEY = process.env.RESEND_API_KEY;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ALLOWED_ORIGINS = ['https://www.bamper.sk', 'https://bamper.sk'];
 
+const MEDIA_BUCKET = 'testimonials';
+const MEDIA_MIME_EXT = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+  'video/mp4': 'mp4',
+  'video/webm': 'webm',
+  'video/quicktime': 'mov',
+};
+
+function mediaPathFromUrl(url) {
+  const marker = `/storage/v1/object/public/${MEDIA_BUCKET}/`;
+  const i = String(url ?? '').indexOf(marker);
+  return i === -1 ? null : url.slice(i + marker.length);
+}
+
+async function deleteMediaObject(path) {
+  if (!path) return;
+  await fetch(`${SUPABASE_URL}/storage/v1/object/${MEDIA_BUCKET}/${path}`, {
+    method: 'DELETE',
+    headers: { apikey: SUPABASE_SERVICE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_KEY}` },
+  }).catch(() => {});
+}
+
 function isAuthed(req) {
   const token = (req.headers.authorization || '').replace('Bearer ', '');
   if (!ADMIN_PASSWORD || !token) return false;
@@ -120,12 +145,43 @@ module.exports = async function handler(req, res) {
     if (req.method === 'POST') {
       if (type === 'testimonials') return res.json(await sb('/testimonials', 'POST', req.body));
       if (type === 'blocked_dates') return res.json(await sb('/blocked_dates', 'POST', req.body));
+
+      if (type === 'upload-url') {
+        const { contentType } = req.body || {};
+        const ext = MEDIA_MIME_EXT[contentType];
+        if (!ext) return res.status(400).json({ error: 'Nepodporovaný typ súboru' });
+
+        const path = `${crypto.randomUUID()}.${ext}`;
+        const signRes = await fetch(`${SUPABASE_URL}/storage/v1/object/upload/sign/${MEDIA_BUCKET}/${path}`, {
+          method: 'POST',
+          headers: {
+            apikey: SUPABASE_SERVICE_KEY,
+            Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),
+        });
+        if (!signRes.ok) return res.status(502).json({ error: await signRes.text() });
+        const { url } = await signRes.json();
+
+        return res.json({
+          signedUrl: `${SUPABASE_URL}/storage/v1${url}`,
+          publicUrl: `${SUPABASE_URL}/storage/v1/object/public/${MEDIA_BUCKET}/${path}`,
+        });
+      }
     }
 
     if (req.method === 'PATCH') {
       if (!id) return res.status(400).json({ error: 'Chýba id' });
 
-      if (type === 'testimonials') return res.json(await sb(`/testimonials?id=eq.${id}`, 'PATCH', req.body));
+      if (type === 'testimonials') {
+        if ('media_url' in req.body) {
+          const rows = await sb(`/testimonials?id=eq.${id}&select=media_url`);
+          const oldUrl = rows?.[0]?.media_url;
+          if (oldUrl && oldUrl !== req.body.media_url) await deleteMediaObject(mediaPathFromUrl(oldUrl));
+        }
+        return res.json(await sb(`/testimonials?id=eq.${id}`, 'PATCH', req.body));
+      }
 
       if (type === 'reservations') {
         const newStatus = req.body.status;
@@ -164,7 +220,12 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'DELETE') {
       if (!id) return res.status(400).json({ error: 'Chýba id' });
-      if (type === 'testimonials') { await sb(`/testimonials?id=eq.${id}`, 'DELETE'); return res.status(204).end(); }
+      if (type === 'testimonials') {
+        const rows = await sb(`/testimonials?id=eq.${id}&select=media_url`);
+        await deleteMediaObject(mediaPathFromUrl(rows?.[0]?.media_url));
+        await sb(`/testimonials?id=eq.${id}`, 'DELETE');
+        return res.status(204).end();
+      }
       if (type === 'blocked_dates') { await sb(`/blocked_dates?id=eq.${id}`, 'DELETE'); return res.status(204).end(); }
     }
 
