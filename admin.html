@@ -142,6 +142,13 @@
   .media-thumb { margin-top: 12px; }
   .media-thumb img, .media-thumb video { max-width: 220px; max-height: 160px; border-radius: 8px; display: block; border: 1px solid var(--line); }
   .media-upload-progress { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .media-selected { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; color: var(--ink-soft); }
+  .media-clear-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 50%; border: none;
+    background: var(--soft); color: var(--muted); font-size: 15px; line-height: 1; cursor: pointer;
+  }
+  .media-clear-btn:hover { background: var(--red); color: #fff; }
 
   .badge {
     display: inline-block;
@@ -268,7 +275,14 @@
         <div class="field"><label>Meno</label><input type="text" id="tName" placeholder="Ján Novák"></div>
         <div class="field"><label>Rola / firma (nepovinné)</label><input type="text" id="tRole" placeholder="Organizátor podujatia"></div>
         <div class="field"><label>Text referencie</label><textarea id="tBody" placeholder="Super zážitok, určite odporúčam..."></textarea></div>
-        <div class="field"><label>Fotka / video (nepovinné, max 50 MB)</label><input type="file" id="tMedia" accept="image/*,video/*"></div>
+        <div class="field">
+          <label>Fotka / video (nepovinné, max 50 MB)</label>
+          <input type="file" id="tMedia" accept="image/*,video/*" onchange="showMediaPreview()">
+          <div class="media-selected" id="tMediaPreview" style="display:none">
+            <span id="tMediaName"></span>
+            <button type="button" class="media-clear-btn" onclick="clearMediaSelection()">&times;</button>
+          </div>
+        </div>
         <div class="form-row">
           <div class="field"><label>Poradie zobrazenia</label><input type="number" id="tOrder" value="0" min="0"></div>
           <div class="field" style="justify-content:flex-end">
@@ -469,6 +483,19 @@
     `).join('');
   }
 
+  function showMediaPreview() {
+    const file = document.getElementById('tMedia').files[0];
+    const preview = document.getElementById('tMediaPreview');
+    if (!file) { preview.style.display = 'none'; return; }
+    document.getElementById('tMediaName').textContent = file.name;
+    preview.style.display = 'flex';
+  }
+
+  function clearMediaSelection() {
+    document.getElementById('tMedia').value = '';
+    document.getElementById('tMediaPreview').style.display = 'none';
+  }
+
   async function uploadMedia(file, statusEl) {
     const setStatus = msg => { if (statusEl) statusEl.textContent = msg; };
     setStatus('Nahrávam...');
@@ -533,7 +560,7 @@
     document.getElementById('tBody').value = '';
     document.getElementById('tOrder').value = '0';
     document.getElementById('tApproved').checked = false;
-    document.getElementById('tMedia').value = '';
+    clearMediaSelection();
     document.getElementById('tMediaStatus').textContent = '';
     saveBtn.disabled = false;
     toggleAddTestimonial();
