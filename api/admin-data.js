@@ -230,6 +230,11 @@ module.exports = async function handler(req, res) {
         return res.status(204).end();
       }
       if (type === 'blocked_dates') { await sb(`/blocked_dates?id=eq.${id}`, 'DELETE'); return res.status(204).end(); }
+      if (type === 'reservations') {
+        await sb(`/blocked_dates?reservation_id=eq.${id}`, 'DELETE').catch(() => {});
+        await sb(`/reservations?id=eq.${id}`, 'DELETE');
+        return res.status(204).end();
+      }
     }
 
     return res.status(400).json({ error: 'Neznámy typ alebo metóda' });

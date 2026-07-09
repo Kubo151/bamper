@@ -446,6 +446,7 @@
             <select class="status-select" onchange="updateStatus('${r.id}', this.value)">
               ${['new','contacted','confirmed','declined'].map(s => `<option value="${s}"${r.status===s?' selected':''}>${STATUS_LABELS[s]}</option>`).join('')}
             </select>
+            ${r.status === 'declined' ? `<button class="btn btn-danger btn-sm" onclick="deleteReservation('${r.id}')">Zmazať</button>` : ''}
           </div>
         </div>
         <div class="card-sub" style="margin-top:8px">${new Date(r.created_at).toLocaleString('sk-SK')}</div>
@@ -455,6 +456,13 @@
 
   async function updateStatus(id, status) {
     await api(`/api/admin-data?type=reservations&id=${id}`, 'PATCH', { status });
+    loadReservations();
+  }
+
+  async function deleteReservation(id) {
+    if (!confirm('Naozaj zmazať túto rezerváciu?')) return;
+    await api(`/api/admin-data?type=reservations&id=${id}`, 'DELETE');
+    loadReservations();
   }
 
   // ── REFERENCIE ──

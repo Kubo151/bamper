@@ -24,7 +24,7 @@
 <meta name="twitter:image" content="https://www.bamper.sk/uploads/trat.jpeg">
 
 <!-- JSON-LD -->
-<script type="application/ld+json">
+<script type="application/ld+json" id="ldJsonBusiness">
 {
   "@context": "https://schema.org",
   "@type": "LocalBusiness",
@@ -691,6 +691,7 @@
         <li><a href="#preco">Čo dostanete</a></li>
         <li><a href="#ako">Ako to funguje</a></li>
         <li><a href="#cenik">Cenník</a></li>
+        <li id="navReferencie" style="display:none"><a href="#referencie">Referencie</a></li>
         <li><a href="#faq">FAQ</a></li>
         <li><a href="#kontakt">Kontakt</a></li>
       </ul>
@@ -1124,6 +1125,7 @@
       <a href="#preco">Čo dostanete</a>
       <a href="#ako">Ako to funguje</a>
       <a href="#cenik">Cenník</a>
+      <a href="#referencie" id="navReferenciaMob" style="display:none">Referencie</a>
       <a href="#faq">FAQ</a>
       <a href="#kontakt">Kontakt</a>
       <a href="#formular" class="mob-cta">Rezervovať →</a>
@@ -1301,7 +1303,7 @@
             <div class="test-media-grid${media.length === 1 ? ' single' : ''}">
               ${media.map(m => m.type === 'video'
                 ? `<video class="test-media" src="${esc(m.url)}" controls muted playsinline></video>`
-                : `<img class="test-media" src="${esc(m.url)}" alt="" loading="lazy" data-lightbox data-t="${ti}" data-url="${esc(m.url)}">`
+                : `<img class="test-media" src="${esc(m.url)}" alt="Referencia od zákazníka ${esc(t.name)} — Bamper" loading="lazy" data-lightbox data-t="${ti}" data-url="${esc(m.url)}">`
               ).join('')}
             </div>` : '';
           return `
@@ -1316,6 +1318,8 @@
           `;
         }).join('');
         document.getElementById('referencie').style.display = '';
+        document.getElementById('navReferencie').style.display = '';
+        document.getElementById('navReferenciaMob').style.display = '';
 
         document.getElementById('testGrid').addEventListener('click', e => {
           const img = e.target.closest('img[data-lightbox]');
@@ -1324,6 +1328,20 @@
           const idx = lbGalleries[ti].indexOf(img.dataset.url);
           openLightbox(ti, idx);
         });
+
+        // SEO: pridaj reálne referencie do LocalBusiness JSON-LD (bez vymyslených hodnotení)
+        const ldScript = document.getElementById('ldJsonBusiness');
+        if (ldScript) {
+          try {
+            const ld = JSON.parse(ldScript.textContent);
+            ld.review = rows.map(t => ({
+              '@type': 'Review',
+              author: { '@type': 'Person', name: t.name },
+              reviewBody: t.body,
+            }));
+            ldScript.textContent = JSON.stringify(ld);
+          } catch(_) {}
+        }
       } catch(_) {}
     })();
 
