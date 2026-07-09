@@ -3,3 +3,4 @@ node_modules/
 package.json
 package-lock.json
 gen-plan.js
+resend-key.txt
