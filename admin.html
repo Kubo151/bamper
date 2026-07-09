@@ -668,14 +668,45 @@
     el.innerHTML = data.map(b => `
       <div class="card">
         <div class="card-header">
-          <div>
-            <div class="card-title">${b.date_from} ${b.date_from !== b.date_to ? '— ' + b.date_to : ''}</div>
-            ${b.label ? `<div class="card-sub">${esc(b.label)}</div>` : ''}
+          <div style="flex:1">
+            <div id="blocked-view-${b.id}">
+              <div class="card-title">${b.date_from} ${b.date_from !== b.date_to ? '— ' + b.date_to : ''}</div>
+              ${b.label ? `<div class="card-sub">${esc(b.label)}</div>` : ''}
+            </div>
+            <div class="add-form" id="blocked-edit-${b.id}">
+              <div class="form-row">
+                <div class="field"><label>Dátum od</label><input type="date" id="beFrom-${b.id}" value="${b.date_from}"></div>
+                <div class="field"><label>Dátum do</label><input type="date" id="beTo-${b.id}" value="${b.date_to}"></div>
+              </div>
+              <div class="field"><label>Popis (nepovinný)</label><input type="text" id="beLabel-${b.id}" value="${esc(b.label || '')}"></div>
+              <div class="form-actions">
+                <button class="btn btn-primary btn-sm" onclick="saveBlockedEdit('${b.id}')">Uložiť</button>
+                <button class="btn btn-secondary btn-sm" onclick="toggleBlockedEdit('${b.id}')">Zrušiť</button>
+              </div>
+            </div>
           </div>
-          <button class="btn btn-danger btn-sm" onclick="deleteBlocked('${b.id}')">Zmazať</button>
+          <div class="card-actions">
+            <button class="btn btn-secondary btn-sm" onclick="toggleBlockedEdit('${b.id}')">Upraviť</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteBlocked('${b.id}')">Zmazať</button>
+          </div>
         </div>
       </div>
     `).join('');
+  }
+
+  function toggleBlockedEdit(id) {
+    const editing = document.getElementById(`blocked-edit-${id}`).classList.toggle('open');
+    document.getElementById(`blocked-view-${id}`).style.display = editing ? 'none' : '';
+  }
+
+  async function saveBlockedEdit(id) {
+    const date_from = document.getElementById(`beFrom-${id}`).value;
+    const date_to = document.getElementById(`beTo-${id}`).value;
+    const label = document.getElementById(`beLabel-${id}`).value.trim();
+    if (!date_from || !date_to) { alert('Vyplň dátum od a do'); return; }
+    if (date_to < date_from) { alert('Dátum do musí byť rovnaký alebo neskorší ako od'); return; }
+    await api(`/api/admin-data?type=blocked_dates&id=${id}`, 'PATCH', { date_from, date_to, label: label || null });
+    loadBlocked();
   }
 
   function toggleAddBlocked() {

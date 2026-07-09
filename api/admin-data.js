@@ -218,6 +218,10 @@ module.exports = async function handler(req, res) {
 
         return res.json(updated);
       }
+
+      if (type === 'blocked_dates') {
+        return res.json(await sb(`/blocked_dates?id=eq.${id}`, 'PATCH', req.body));
+      }
     }
 
     if (req.method === 'DELETE') {
