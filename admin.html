@@ -229,6 +229,19 @@
     accent-color: var(--red);
     cursor: pointer;
   }
+
+  /* ── MOBILE ── */
+  @media(max-width:640px) {
+    .topbar { padding: 0 16px; }
+    .tabs { padding: 0 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab-btn { white-space: nowrap; padding: 14px 14px; font-size: 13px; }
+    .content { padding: 20px 16px; }
+    .card { padding: 16px; }
+    .card-header { flex-direction: column; align-items: stretch; }
+    .card-actions { margin-top: 4px; }
+    .section-header { flex-wrap: wrap; gap: 10px; }
+  }
 </style>
 </head>
 <body>
